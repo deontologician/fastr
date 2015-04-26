@@ -1,0 +1,84 @@
+#! /bin/sh
+
+PATH=.:bin:$PATH
+
+os=`uname -s | LANG=C tr [A-Z] [a-z]`
+case `uname -m` in
+    i[3456]86) cpu=x86 ;;
+    i86pc) cpu=x86 ;;
+    x86) cpu=x86 ;;
+    x86_64) cpu=amd64 ;;
+    ppc) cpu=powerpc ;;
+    arm*b) cpu=armeb ;;
+    arm*l) cpu=armel ;;
+    arm*) cpu=arm ;;
+    *) cpu=`uname -p | LANG=C tr [A-Z] [a-z]` ;;
+esac
+echo $os | grep "^win" >/dev/null 2>&1 && {
+    erl=werl.exe
+    BASEDIR=`cd ..; pwd`
+    ARCHDIR="windows"
+} || {
+    here=`which "$0"`
+    base=`dirname "$here"`/..
+    [ -z "$BASEDIR" ] && BASEDIR=`cd "$base"; pwd`
+    erl=erlexec
+    ARCHDIR="${os}-${cpu}"
+}
+
+cd "$BASEDIR"
+. etc/cean.cfg
+
+ROOTDIR="$BASEDIR/erlang"
+for BINDIR in `ls -1d erlang/erts*`
+do
+    # get the latest erts available
+    BINDIR="$BASEDIR/$BINDIR/$ARCHDIR/bin"
+done 
+EMU=beam
+PROGNAME=erl
+PATH="$BINDIR":$PATH
+ERL_INETRC="$BASEDIR/etc/inetrc"
+LD_LIBRARY_PATH="$BASEDIR/lib/$ARCHDIR"
+
+[ "$PORTS_RANGE" = "" ] || {
+    min="inet_dist_listen_min ${PORTS_RANGE%-*}"
+    max="inet_dist_listen_max ${PORTS_RANGE#*-}"
+    opts="$opts -kernel $min $max"
+}
+
+# Apply platform specific action ==================================
+
+[ -d "$BINDIR" ] || {
+    echo "system $ARCHDIR is not supported"
+    exit
+}
+
+TMP="$BASEDIR/tmp"
+[ "$ARCHDIR" = "windows" ] && {
+    cat > "$BINDIR/erl.ini" << EOF
+[erlang]
+Bindir=$BINDIR
+Progname=erl
+Rootdir=$ROOTDIR
+EOF
+}
+[ "$os" = "darwin" ] && {
+    DYLD_LIBRARY_PATH="$LD_LIBRARY_PATH"
+    export DYLD_LIBRARY_PATH
+}
+
+# Start erlang node ===============================================
+
+export ARCHDIR
+export EMU
+export ROOTDIR
+export BINDIR
+export PROGNAME
+export ERL_MAX_PORTS
+export ERL_INETRC
+export LD_LIBRARY_PATH
+export PATH
+export TMP
+
+$erl ${1+"$@"}

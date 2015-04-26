@@ -1,0 +1,5 @@
+[{release,"OTP  APN 181 01","R12B","5.6.4",
+          [{kernel,"2.12.4","/home/cean/prod/tmp/erlang_build/lib/erlang/lib/kernel-2.12.4"},
+           {stdlib,"1.15.4","/home/cean/prod/tmp/erlang_build/lib/erlang/lib/stdlib-1.15.4"},
+           {sasl,"2.1.5.3","/home/cean/prod/tmp/erlang_build/lib/erlang/lib/sasl-2.1.5.3"}],
+          permanent}].
